@@ -16,12 +16,12 @@ fn main() -> Result<()>{
         Ok(file) => {
             //Check if the file is an image
             match file.decode(){
-                Ok(image) => run(image, args.algorithm),
-                Err(error) => Err(error::Error::IOError(error.to_string()))
+                Ok(image) => run(image.into_rgb8(), args.algorithm),
+                Err(error) => Err(Error::IOError(error.to_string()))
             }
         },
 
-        Err(error) => Err(error::Error::IOError(error.to_string()))
+        Err(error) => Err(Error::IOError(error.to_string()))
     }
 }
 
@@ -34,5 +34,5 @@ struct Args{
 
     ///Pathfinding algorithm
     #[arg(value_enum, short, long, default_value_t = Algorithm::Dijkstra)]
-    algorithm: Algorithm
+    algorithm: Algorithm,
 }
