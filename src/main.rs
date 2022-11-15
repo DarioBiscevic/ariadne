@@ -13,7 +13,6 @@ fn main() -> Result<()>{
 
     //Check if the specified file exists
     match Reader::open(args.filename){
-
         Ok(file) => {
             //Check if the file is an image
             match file.decode(){
@@ -23,7 +22,6 @@ fn main() -> Result<()>{
         },
 
         Err(error) => Err(error::Error::IOError(error.to_string()))
-
     }
 }
 
