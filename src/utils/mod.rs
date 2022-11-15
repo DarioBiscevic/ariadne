@@ -1,5 +1,8 @@
 use image::{Rgb, RgbImage};
 
+use std::rc::Rc;
+use std::cell::RefCell;
+
 pub mod algorithm;
 mod node;
 
@@ -14,29 +17,41 @@ pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
     //TODO: generate node tree, execute algorithm, create output file
 
     //Create the nodes that will be part of the graph/tree
-    let nodes: Vec<_> = image
+    let nodes: Vec<Rc<RefCell<Node>>> = image
         .enumerate_pixels()
         .map(|(x, y, pixel)| {
             Node::new(*pixel, (x, y))
         })
         .collect();
 
+    connect_nodes(&nodes);
+
     //Try to find the start of the maze
-    let root = nodes
+    let maybe_root = nodes
         .iter()
-        .find(|node| node.borrow().color == Rgb::from(DEFAULT_STARTING_COLOR));
+        .find(|node| node.as_ref().borrow().color == Rgb::from(DEFAULT_STARTING_COLOR));
 
     //Check if there is actually a starting node
-    match root{
-        Some(root) => algorithm.execute(root, Rgb::from(DEFAULT_ENDING_COLOR))?,
+    let root = match maybe_root{
+        Some(root) => root,
         None => {
             return Err(
-                Error::Generic(
-                    format!("Couldn't find the starting point (the color should be {:?})", DEFAULT_STARTING_COLOR)
-                )
+                Error::Generic(format!("Couldn't find the starting point (the color should be {:?})", DEFAULT_STARTING_COLOR))
             );
         }
-    }
+    };
+
+    algorithm.execute(root, Rgb::from(DEFAULT_ENDING_COLOR))?;
 
     Ok(())
+}
+
+///Function that fills the `edges` property of every node with the appropriate
+/// neighbouring nodes. Every node has 4 neighbours: up, down, left, right.
+fn connect_nodes(nodes: &Vec<Rc<RefCell<Node>>>){
+    for node in nodes.iter().filter(|n| n.as_ref().borrow().color != Rgb::from(DEFAULT_WALL_COLOR)){
+        for neighbour in nodes.iter().filter(|n| n.as_ref().borrow().color != Rgb::from(DEFAULT_WALL_COLOR) && node.as_ref().borrow().is_neighbour_to(*n)){
+            node.borrow_mut().edges.push(neighbour.clone());
+        }
+    }
 }
