@@ -21,7 +21,7 @@ impl Node{
             color,
             node_type,
             coords,
-            seen: true,
+            seen: false,
             distance: Distance::None,
             edges: Vec::new()
         }))
