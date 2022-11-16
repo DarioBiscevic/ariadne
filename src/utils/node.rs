@@ -3,10 +3,11 @@ use image::Rgb;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-///Building block of a graph/tree structure
+///Building block of a graph/tree structure.
 #[derive(Debug, Clone)]
 pub struct Node{
     pub color: Rgb<u8>,
+    pub node_type: NodeType,
     pub coords: (u32, u32),
     pub seen: bool,
     pub distance: Distance,
@@ -14,10 +15,11 @@ pub struct Node{
 }
 
 impl Node{
-    ///Creates an `Rc<RefCell<` pointer to a new node
-    pub fn new(color: Rgb<u8>, coords: (u32, u32)) -> Rc<RefCell<Self>>{
+    ///Creates an `Rc<RefCell<Node>>` pointer to a new node.
+    pub fn new(color: Rgb<u8>, coords: (u32, u32), node_type: NodeType) -> Rc<RefCell<Self>>{
         Rc::new(RefCell::new(Node {
             color,
+            node_type,
             coords,
             seen: true,
             distance: Distance::None,
@@ -25,7 +27,7 @@ impl Node{
         }))
     }
 
-    ///Checks if the `other` node is directly neighbouring with the current node
+    ///Checks if the `other` node is directly neighbouring with the current node.
     pub fn is_neighbour_to(&self, other: &Rc<RefCell<Self>>) -> bool{
         let other_x = other.borrow().coords.0;
         let other_y = other.borrow().coords.1;
@@ -35,10 +37,39 @@ impl Node{
 
         (diff_x == 0 && (diff_y == 1 || diff_y == -1)) || (diff_y == 0 && (diff_x == 1 || diff_x == -1))
     }
+
+    ///Returns `true` if the node is a "road node".
+    pub fn is_road(&self) -> bool{
+        self.node_type == NodeType::Road
+    }
+
+    ///Returns `true` if the node is a "wall node".
+    pub fn is_wall(&self) -> bool{
+        self.node_type == NodeType::Wall
+    }
+
+    ///Returns `true` if the node is a starting node.
+    pub fn is_start(&self) -> bool{
+        self.node_type == NodeType::Start
+    }
+
+    ///Returns `true` if the node is an ending node.
+    pub fn is_end(&self) -> bool{
+        self.node_type == NodeType::End
+    }
 }
 
 #[derive(Debug, Clone)]
 pub enum Distance{
     _Value(u64),
     None
+}
+
+///Enum to make the identification of the node type easier.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NodeType{
+    Wall,
+    Road,
+    Start,
+    End
 }

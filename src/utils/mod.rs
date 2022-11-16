@@ -1,4 +1,4 @@
-use image::{Rgb, RgbImage};
+use image::{RgbImage, Pixel};
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -7,20 +7,31 @@ pub mod algorithm;
 mod node;
 
 use crate::prelude::*;
-use node::Node;
+use node::{Node, NodeType};
 
 pub use crate::utils::algorithm::Algorithm;
 
 ///Entry point for the main process. It computes the path from the starting point to the ending point
 /// using the specified `algorithm`.
 pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
-    //TODO: generate node tree, execute algorithm, create output file
+    //TODO: execute algorithm, create output file
 
     //Create the nodes that will be part of the graph/tree
     let nodes: Vec<Rc<RefCell<Node>>> = image
         .enumerate_pixels()
         .map(|(x, y, pixel)| {
-            Node::new(*pixel, (x, y))
+
+            //Identify the node type
+            let node_type = match pixel.channels(){
+                DEFAULT_STARTING_COLOR => NodeType::Start,
+                DEFAULT_ENDING_COLOR => NodeType::End,
+                DEFAULT_ROAD_COLOR => NodeType::Road,
+                DEFAULT_WALL_COLOR => NodeType::Wall,
+                _ => NodeType::Road,
+            };
+
+            //Return a newly created node
+            Node::new(*pixel, (x, y), node_type)
         })
         .collect();
 
@@ -29,7 +40,7 @@ pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
     //Try to find the start of the maze
     let maybe_root = nodes
         .iter()
-        .find(|node| node.as_ref().borrow().color == Rgb::from(DEFAULT_STARTING_COLOR));
+        .find(|node| node.as_ref().borrow().is_start());
 
     //Check if there is actually a starting node
     let root = match maybe_root{
@@ -41,16 +52,16 @@ pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
         }
     };
 
-    algorithm.execute(root, Rgb::from(DEFAULT_ENDING_COLOR))?;
+    algorithm.execute(root)?;
 
     Ok(())
 }
 
 ///Function that fills the `edges` property of every node with the appropriate
 /// neighbouring nodes. Every node has 4 neighbours: up, down, left, right.
-fn connect_nodes(nodes: &Vec<Rc<RefCell<Node>>>){
-    for node in nodes.iter().filter(|n| n.as_ref().borrow().color != Rgb::from(DEFAULT_WALL_COLOR)){
-        for neighbour in nodes.iter().filter(|n| n.as_ref().borrow().color != Rgb::from(DEFAULT_WALL_COLOR) && node.as_ref().borrow().is_neighbour_to(*n)){
+fn connect_nodes(nodes: &[Rc<RefCell<Node>>]){
+    for node in nodes.iter().filter(|n| !n.as_ref().borrow().is_wall()){
+        for neighbour in nodes.iter().filter(|n| !n.as_ref().borrow().is_wall() && node.as_ref().borrow().is_neighbour_to(n)){
             node.borrow_mut().edges.push(neighbour.clone());
         }
     }

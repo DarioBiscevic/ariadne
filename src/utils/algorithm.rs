@@ -1,5 +1,3 @@
-use image::Rgb;
-
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -15,14 +13,14 @@ pub enum Algorithm{
 
 impl Algorithm{
     ///Execute the pathfinding algorithm
-    pub fn execute(&self, graph: &Rc<RefCell<Node>>, target: Rgb<u8>) -> Result<()>{
+    pub fn execute(&self, graph: &Rc<RefCell<Node>>) -> Result<()>{
         match self{
-            Self::Dijkstra => dijkstra(graph, target)
+            Self::Dijkstra => dijkstra(graph)
         }
     }
 }
 
-fn dijkstra(_graph: &Rc<RefCell<Node>>, _target: Rgb<u8>) -> Result<()>{
+fn dijkstra(_graph: &Rc<RefCell<Node>>) -> Result<()>{
 
     Ok(())
 }
