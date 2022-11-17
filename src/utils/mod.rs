@@ -1,4 +1,4 @@
-use image::{RgbImage, Pixel};
+use image::{RgbImage, Pixel, Rgb};
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -39,12 +39,25 @@ pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
     let result = algorithm.execute(nodes)?;
 
     match result {
-        Path::Found(_path) => {
-            /*for coords in path.iter(){
-                println!("{:?}", coords);
-            }*/
+        Path::Found(path) => {
+            //Prepare buffer for the output image
+            let mut out_img = RgbImage::new(image.width(), image.height());
+
+            //Iterate through all the pixels and change only those that are parte of the path
+            for (x, y, pixel) in image.enumerate_pixels(){
+                if path.contains(&(x, y)){
+                    //Convert the default path color from a slice to an array of values
+                    let path_color = [DEFAULT_PATH_COLOR[0], DEFAULT_PATH_COLOR[1], DEFAULT_PATH_COLOR[2]];
+                    out_img.put_pixel(x, y, Rgb::from(path_color));
+                }else{
+                    out_img.put_pixel(x, y, *pixel);
+                }
+            }
+
+            //Save the output image
+            out_img.save(DEFAULT_OUTPUT_NAME)?;
         },
-        Path::NotFound => {println!("Path not found!"); }
+        Path::NotFound => { eprintln!("Path not found!"); }
     }
 
     Ok(())
