@@ -7,15 +7,13 @@ pub mod algorithm;
 mod node;
 
 use crate::prelude::*;
-use node::{Node, NodeType};
+use node::{Node, NodeType, Distance};
 
-pub use crate::utils::algorithm::Algorithm;
+pub use crate::utils::algorithm::{Algorithm, Path};
 
 ///Entry point for the main process. It computes the path from the starting point to the ending point
 /// using the specified `algorithm`.
 pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
-    //TODO: execute algorithm, create output file
-
     //Create the nodes that will be part of the graph/tree
     let nodes: Vec<Rc<RefCell<Node>>> = image
         .enumerate_pixels()
@@ -35,24 +33,19 @@ pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
         })
         .collect();
 
+    //Connect the nodes
     connect_nodes(&nodes);
 
-    //Try to find the start of the maze
-    let maybe_root = nodes
-        .iter()
-        .find(|node| node.as_ref().borrow().is_start());
+    let result = algorithm.execute(nodes)?;
 
-    //Check if there is actually a starting node
-    let root = match maybe_root{
-        Some(root) => root,
-        None => {
-            return Err(
-                Error::Generic(format!("Couldn't find the starting point (the color should be {:?})", DEFAULT_STARTING_COLOR))
-            );
-        }
-    };
-
-    algorithm.execute(root)?;
+    match result {
+        Path::Found(_path) => {
+            /*for coords in path.iter(){
+                println!("{:?}", coords);
+            }*/
+        },
+        Path::NotFound => {println!("Path not found!"); }
+    }
 
     Ok(())
 }
