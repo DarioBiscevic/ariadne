@@ -14,9 +14,11 @@ pub use crate::utils::algorithm::{Algorithm, Path};
 ///Entry point for the main process. It computes the path from the starting point to the ending point
 /// using the specified `algorithm`.
 pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
+
     //Create the nodes that will be part of the graph/tree
     let nodes: Vec<Rc<RefCell<Node>>> = image
         .enumerate_pixels()
+        .filter(|(_, _, pixel)| pixel.channels() != DEFAULT_WALL_COLOR)
         .map(|(x, y, pixel)| {
 
             //Identify the node type
@@ -66,8 +68,8 @@ pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
 ///Function that fills the `edges` property of every node with the appropriate
 /// neighbouring nodes. Every node has 4 neighbours: up, down, left, right.
 fn connect_nodes(nodes: &[Rc<RefCell<Node>>]){
-    for node in nodes.iter().filter(|n| !n.as_ref().borrow().is_wall()){
-        for neighbour in nodes.iter().filter(|n| !n.as_ref().borrow().is_wall() && node.as_ref().borrow().is_neighbour_to(n)){
+    for node in nodes.iter(){
+        for neighbour in nodes.iter().filter(|n| node.as_ref().borrow().is_neighbour_to(n)){
             node.borrow_mut().edges.push(neighbour.clone());
         }
     }

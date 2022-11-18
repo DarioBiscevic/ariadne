@@ -42,7 +42,7 @@ fn dijkstra(nodes: Vec<Rc<RefCell<Node>>>) -> Result<Path>{
     let mut ending = None;
 
     //Main loop of the algorithm: it continues while there are unseen nodes and if the target isn't found
-    while nodes.iter().any(|n| !n.borrow().seen && !n.borrow().is_wall()) {
+    while nodes.iter().any(|n| !n.borrow().seen) {
         let current_ptr = nodes.iter().filter(|n| !n.borrow().seen).min();
         
         let mut current = match current_ptr{
@@ -60,7 +60,7 @@ fn dijkstra(nodes: Vec<Rc<RefCell<Node>>>) -> Result<Path>{
         current.seen = true;
 
         //Iterate through the neighbours and calculate their tentative distance
-        for neighbour in current.edges.iter().filter(|n| !n.borrow().seen && !n.borrow().is_wall()){
+        for neighbour in current.edges.iter().filter(|n| !n.borrow().seen){
             let mut neighbour_mut = neighbour.borrow_mut();
         
             //First check if the tentative distance of the current node is less than infinity

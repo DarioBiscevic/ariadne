@@ -52,7 +52,7 @@ impl Node{
     }
 
     ///Returns `true` if the node is a "wall node".
-    pub fn is_wall(&self) -> bool{
+    pub fn _is_wall(&self) -> bool{
         self.node_type == NodeType::Wall
     }
 

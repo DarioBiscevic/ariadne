@@ -5,7 +5,7 @@ pub use crate::utils::*;
 ///Redefinition of the result type.
 pub type Result<T> = core::result::Result<T, Error>;
 
-pub const DEFAULT_OUTPUT_NAME: &'static str = "output.png";
+pub const DEFAULT_OUTPUT_NAME: &str = "output.png";
 
 //Useful color constants as arrays of u8
 pub const COLOR_WHITE: &[u8] = &[255, 255, 255];
