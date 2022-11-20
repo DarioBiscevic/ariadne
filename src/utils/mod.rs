@@ -4,16 +4,18 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 pub mod algorithm;
+pub mod args;
 mod node;
 
 use crate::prelude::*;
 use node::{Node, NodeType, Distance};
 
 pub use crate::utils::algorithm::{Algorithm, Path};
+pub use args::Args;
 
 ///Entry point for the main process. It computes the path from the starting point to the ending point
 /// using the specified `algorithm`.
-pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
+pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
 
     //Create the nodes that will be part of the graph/tree
     let nodes: Vec<Rc<RefCell<Node>>> = image
@@ -38,7 +40,22 @@ pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
     //Connect the nodes
     connect_nodes(&nodes);
 
-    let result = algorithm.execute(nodes)?;
+    //Try to find the start of the maze
+    let maybe_root = nodes
+        .iter()
+        .find(|node| node.as_ref().borrow().is_start());
+
+    //Check if there is actually a starting node
+    let root = match maybe_root{
+        Some(root) => root,
+        None => {
+            return Err(
+                Error::Generic(format!("Couldn't find the starting point (the color should be {:?})", DEFAULT_STARTING_COLOR))
+            );
+        }
+    };
+
+    let result = arguments.algorithm.execute(root, nodes.len())?;
 
     match result {
         Path::Found(path) => {
@@ -57,7 +74,7 @@ pub fn run(image: RgbImage, algorithm: Algorithm) -> Result<()>{
             }
 
             //Save the output image
-            out_img.save(DEFAULT_OUTPUT_NAME)?;
+            out_img.save(arguments.output_file)?;
         },
         Path::NotFound => { eprintln!("Path not found!"); }
     }

@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc};
 use std::cell::RefCell;
 
 use crate::prelude::*;
@@ -8,47 +8,42 @@ use super::{Node, Distance};
 /// In the future, other pathfinding algorithms will be added.
 #[derive(clap::ValueEnum, Debug, Clone)]
 pub enum Algorithm{
-    Dijkstra
+    Dijkstra,
 }
 
 impl Algorithm{
     ///Execute the pathfinding algorithm
-    pub fn execute(&self, nodes: Vec<Rc<RefCell<Node>>>) -> Result<Path>{
+    pub fn execute(&self, root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         match self{
-            Self::Dijkstra => dijkstra(nodes),
+            Self::Dijkstra => dijkstra(root, n_nodes),
         }
     }
 }
 
-fn dijkstra(nodes: Vec<Rc<RefCell<Node>>>) -> Result<Path>{
-    //Try to find the start of the maze
-    let maybe_root = nodes
-        .iter()
-        .find(|node| node.as_ref().borrow().is_start());
-
-    //Check if there is actually a starting node
-    let root = match maybe_root{
-        Some(root) => root,
-        None => {
-            return Err(
-                Error::Generic(format!("Couldn't find the starting point (the color should be {:?})", DEFAULT_STARTING_COLOR))
-            );
-        }
-    };
-
+fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     //Initialize the start of the tree
     root.borrow_mut().set_distance(0);
 
+    let mut path_edges: Vec<Rc<RefCell<Node>>> = Vec::with_capacity(n_nodes);
+    path_edges.push(root.clone());
+
     let mut ending = None;
 
-    //Main loop of the algorithm: it continues while there are unseen nodes and if the target isn't found
-    while nodes.iter().any(|n| !n.borrow().seen) {
-        let current_ptr = nodes.iter().filter(|n| !n.borrow().seen).min();
+    //Loop while there are nodes (and subsequent paths) to expand
+    while !path_edges.is_empty(){
+
+        //Remove all the nodes that were already checked - they won't be used again
+        path_edges.retain(|n| !n.borrow().seen);
+
+        //Get the node with the smallest tentative distance
+        let current_ptr = path_edges.iter().filter(|n| !n.borrow().seen).cloned().min();
         
-        let mut current = match current_ptr{
-            Some(node) => node.borrow_mut(),
+        let current: Rc<RefCell<Node>> = match current_ptr{
+            Some(node) => node,
             None => return Err(Error::Generic("Didn't find a valid vertex".to_string()))
         };
+
+        let mut current = current.borrow_mut();
 
         //Exit the loop if the target is found
         if current.is_end(){
@@ -59,24 +54,24 @@ fn dijkstra(nodes: Vec<Rc<RefCell<Node>>>) -> Result<Path>{
         //Mark the current node as seen
         current.seen = true;
 
+        //First check if the tentative distance of the current node is less than infinity
+        let curr_dist = match current.distance{
+            Distance::Value(dist) => dist,
+            Distance::Infinity => {
+                return Err(Error::Generic(
+                        format!("Current node has value set to infinity: (x,y) = {:?}, color: {:?}", current.coords, current.color)
+                    ))
+            }
+        };
+
         //Iterate through the neighbours and calculate their tentative distance
         for neighbour in current.edges.iter().filter(|n| !n.borrow().seen){
             let mut neighbour_mut = neighbour.borrow_mut();
-        
-            //First check if the tentative distance of the current node is less than infinity
-            let curr_dist = match current.distance{
-                Distance::Value(dist) => dist,
-                Distance::Infinity => {
-                    return Err(Error::Generic(
-                            format!("Current node has value set to infinity: (x,y) = {:?}, color: {:?}", current.coords, current.color)
-                        ))
-                }
-            };
             
-
+            //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
+            let new_distance = curr_dist + 1;
+            
             if let Distance::Value(neighbour_dist) = neighbour_mut.distance{
-                let new_distance = curr_dist + 1;
-    
                 //Update neighbour's tentative distance
                 if new_distance < neighbour_dist{
                     neighbour_mut.distance = Distance::Value(new_distance);
@@ -86,9 +81,12 @@ fn dijkstra(nodes: Vec<Rc<RefCell<Node>>>) -> Result<Path>{
                 }
             }else{
                 //If the neighbours distance is infinity, setup the new finite value
-                neighbour_mut.distance = Distance::Value(curr_dist + 1);
+                neighbour_mut.distance = Distance::Value(new_distance);
                 neighbour_mut.previous = Some(Rc::new(RefCell::new(current.clone())));
             }
+
+            //Add the neighbour to the set of edges to expand
+            path_edges.push(neighbour.clone());
         }
     }
 
