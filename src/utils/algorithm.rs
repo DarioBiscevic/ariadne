@@ -75,15 +75,14 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
                 //Update neighbour's tentative distance
                 if new_distance < neighbour_dist{
                     neighbour_mut.distance = Distance::Value(new_distance);
-
-                    //Update the neighbour's parent node 
-                    neighbour_mut.previous = Some(Rc::new(RefCell::new(current.clone())));
                 }
             }else{
                 //If the neighbours distance is infinity, setup the new finite value
                 neighbour_mut.distance = Distance::Value(new_distance);
-                neighbour_mut.previous = Some(Rc::new(RefCell::new(current.clone())));
             }
+
+            //Update the neighbour's parent node 
+            neighbour_mut.previous = Some(Rc::new(RefCell::new(current.clone())));
 
             //Add the neighbour to the set of edges to expand
             path_edges.push(neighbour.clone());
@@ -97,13 +96,12 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
             if finish.is_end() && finish.previous.is_some(){
                 //Accumulator for each step of the path
                 let mut path = Vec::new();
-                let mut temp = finish;
+                let mut current = finish;
 
                 //Loop backwards until the starting node is reached
-                while temp.previous.is_some() {
-                    path.push(temp.coords);
-                    let previous = temp.previous.unwrap();
-                    temp = previous.borrow().clone();
+                while let Some(previous) = current.previous {
+                    path.push(current.coords);
+                    current = previous.borrow().clone();
                 }
                 
                 path.reverse();
@@ -115,7 +113,6 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         },
         None => Ok(Path::NotFound)
     }
-
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
