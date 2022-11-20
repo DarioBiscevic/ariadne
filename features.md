@@ -5,7 +5,8 @@
 - [X] Path from green area to red area;
 
 ## Advanced
-- [ ] Add algorithms (DFS...) and the ability to choose which one to use;
+- [ ] Add algorithms (A-Star, DFS...) and the ability to choose which one to use;
 - [ ] Change colors of the starting point, ending point, walls, road, path...
+- [ ] Consider a range of colors as walls (e.g. walls can be grays too, not just pure #000000 black);
 - [ ] Profiling;
-- [ ] Support parallelization;
+- [ ] Support parallelization (if/when possible;
