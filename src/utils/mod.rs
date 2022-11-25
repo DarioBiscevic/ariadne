@@ -37,8 +37,29 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
         })
         .collect();
 
+    //Try to find the end of the maze
+    let maybe_end = nodes
+        .iter()
+        .find(|node| node.borrow().is_end());
+
+    //Check if there is actually an ending node
+    let end = match maybe_end{
+        Some(end) => end,
+        None => {
+            return Err(
+                Error::Generic(format!("Couldn't find the ending point (the color should be {:?})", DEFAULT_ENDING_COLOR))
+            );
+        }
+    };
+
+    let coords;
+
+    {
+        coords = end.borrow().clone().coords;
+    }
+
     //Connect the nodes
-    connect_nodes(&nodes);
+    connect_nodes(&nodes, coords);
 
     //Try to find the start of the maze
     let maybe_root = nodes
@@ -84,9 +105,11 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
 
 ///Function that fills the `edges` property of every node with the appropriate
 /// neighbouring nodes. Every node has 4 neighbours: up, down, left, right.
-fn connect_nodes(nodes: &[Rc<RefCell<Node>>]){
+fn connect_nodes(nodes: &[Rc<RefCell<Node>>], target: (u32, u32)){
     for node in nodes.iter(){
-        for neighbour in nodes.iter().filter(|n| node.as_ref().borrow().is_neighbour_to(n)){
+        node.borrow_mut().set_heuristic_distance_from(target);
+        
+        for neighbour in nodes.iter().filter(|n| node.clone().borrow().is_neighbour_to(n)){
             node.borrow_mut().edges.push(neighbour.clone());
         }
     }
