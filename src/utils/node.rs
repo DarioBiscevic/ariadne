@@ -12,6 +12,7 @@ pub struct Node{
     pub coords: (u32, u32),
     pub seen: bool,
     pub distance: Distance,
+    pub heuristic: u64,
     pub previous: Option<Rc<RefCell<Node>>>,
     pub edges: Vec<Rc<RefCell<Node>>>,
 }
@@ -26,6 +27,7 @@ impl Node{
             seen: false,
             previous: None,
             distance: Distance::Infinity,
+            heuristic: 0,
             edges: Vec::new()
         }))
     }
@@ -35,10 +37,15 @@ impl Node{
         self.distance = Distance::Value(val);
     }
 
+    pub fn set_heuristic_distance_from(&mut self, target: (u32, u32)){
+        self.heuristic = (self.coords.0.abs_diff(target.0) + self.coords.1.abs_diff(target.1)) as u64;
+    }
+
     ///Checks if the `other` node is directly neighbouring with the current node.
     pub fn is_neighbour_to(&self, other: &Rc<RefCell<Self>>) -> bool{
-        let other_x = other.borrow().coords.0;
-        let other_y = other.borrow().coords.1;
+        let borrowed = other.borrow();
+        let other_x = borrowed.coords.0;
+        let other_y = borrowed.coords.1;
 
         let diff_x = other_x as i64 - self.coords.0 as i64;
         let diff_y = other_y as i64 - self.coords.1 as i64;
@@ -84,7 +91,6 @@ impl PartialEq for Node{
 }
 
 impl Eq for Node{}
-
 
 ///Implementation of the `PartialOrd` trait.
 impl PartialOrd for Node{
