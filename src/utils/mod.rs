@@ -3,6 +3,7 @@ use image::{RgbImage, Pixel, Rgb};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::time::Instant;
 
 pub mod algorithm;
 pub mod args;
@@ -16,8 +17,9 @@ pub use args::Args;
 
 ///Entry point for the main process. It computes the path from the starting point to the ending point
 /// using the specified `algorithm`.
-pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
+pub fn run(mut image: RgbImage, arguments: Args) -> Result<()>{
 
+    let start = Instant::now();
     let mut nodes: HashMap<(u32, u32), Rc<RefCell<Node>>> = HashMap::new();
 
     for (x, y, pixel) in image.enumerate_pixels().filter(|(_, _, pixel)| pixel.channels() != DEFAULT_WALL_COLOR){
@@ -30,6 +32,9 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
         };
 
         nodes.insert((x, y), Node::new(*pixel, (x, y), node_type));
+    }
+    if arguments.logging{
+        println!("Inserted {} nodes in {:?}", nodes.len(), start.elapsed());
     }
 
     //Try to find the end of the maze
@@ -47,13 +52,19 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
         }
     };
 
+    let start = Instant::now();
+
     //Connect the nodes
     connect_nodes(&nodes, end_coords);
+
+    if arguments.logging{
+        println!("Time spent preparing the nodes: {:?}", start.elapsed());
+    }
 
     //Try to find the start of the maze
     let maybe_root = nodes
         .iter()
-        .find(|(_, node)| node.as_ref().borrow().is_start());
+        .find(|(_, node)| node.borrow().is_start());
 
     //Check if there is actually a starting node
     let root = match maybe_root{
@@ -65,31 +76,38 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
         }
     };
 
+    let start = Instant::now();
     let result = arguments.algorithm.execute(root, nodes.len())?;
+    if arguments.logging{
+        println!("Algorithm execution time: {:?}", start.elapsed());
+    }
 
     match result {
         Path::Found(path) => {
+            let start = Instant::now();
             //Prepare buffer for the output image
-            let mut out_img = RgbImage::new(image.width(), image.height());
 
-            //Iterate through all the pixels and change only those that are parte of the path
-            for (x, y, pixel) in image.enumerate_pixels(){
-                if path.contains(&(x, y)){
-                    //Convert the default path color from a slice to an array of values
-                    let path_color = [DEFAULT_PATH_COLOR[0], DEFAULT_PATH_COLOR[1], DEFAULT_PATH_COLOR[2]];
-                    out_img.put_pixel(x, y, Rgb::from(path_color));
+            //Convert the default path color from a slice to an array of values
+            let path_color = Rgb::from([DEFAULT_PATH_COLOR[0], DEFAULT_PATH_COLOR[1], DEFAULT_PATH_COLOR[2]]);
+
+            //Substitute the pixels of the path with the path color
+            for (x, y) in path{
+                image.put_pixel(x, y, path_color);
+                if arguments.wider{
                     for (x_n, y_n) in Node::neighbouring_coords((x, y)){
                         if nodes.contains_key(&(x_n, y_n)){
-                            out_img.put_pixel(x_n, y_n, Rgb::from(path_color))
+                            image.put_pixel(x_n, y_n, path_color)
                         }
                     }
-                }else{
-                    out_img.put_pixel(x, y, *pixel);
                 }
             }
-
+            
             //Save the output image
-            out_img.save(arguments.output_file)?;
+            image.save(arguments.output_file)?;
+
+            if arguments.logging{
+                println!("Output file creation time: {:?}", start.elapsed());
+            }
         },
         Path::NotFound => { eprintln!("Path not found!"); }
     }
@@ -99,7 +117,8 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
 
 ///Function that fills the `edges` property of every node with the appropriate
 /// neighbouring nodes. Every node has 4 neighbours: up, down, left, right.
-fn connect_nodes(nodes: &HashMap<(u32, u32), Rc<RefCell<Node>>>, target: &(u32, u32)){for (_, node) in nodes.iter(){
+fn connect_nodes(nodes: &HashMap<(u32, u32), Rc<RefCell<Node>>>, target: &(u32, u32)){
+    for (_, node) in nodes.iter(){
         let mut mut_node = node.borrow_mut();
         mut_node.set_heuristic_distance_from(*target);
 
