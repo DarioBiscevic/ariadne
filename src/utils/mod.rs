@@ -79,7 +79,9 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
                     let path_color = [DEFAULT_PATH_COLOR[0], DEFAULT_PATH_COLOR[1], DEFAULT_PATH_COLOR[2]];
                     out_img.put_pixel(x, y, Rgb::from(path_color));
                     for (x_n, y_n) in Node::neighbouring_coords((x, y)){
-                        out_img.put_pixel(x_n, y_n, Rgb::from(path_color))
+                        if nodes.contains_key(&(x_n, y_n)){
+                            out_img.put_pixel(x_n, y_n, Rgb::from(path_color))
+                        }
                     }
                 }else{
                     out_img.put_pixel(x, y, *pixel);
