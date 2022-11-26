@@ -78,6 +78,9 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
                     //Convert the default path color from a slice to an array of values
                     let path_color = [DEFAULT_PATH_COLOR[0], DEFAULT_PATH_COLOR[1], DEFAULT_PATH_COLOR[2]];
                     out_img.put_pixel(x, y, Rgb::from(path_color));
+                    for (x_n, y_n) in Node::neighbouring_coords((x, y)){
+                        out_img.put_pixel(x_n, y_n, Rgb::from(path_color))
+                    }
                 }else{
                     out_img.put_pixel(x, y, *pixel);
                 }
@@ -98,7 +101,7 @@ fn connect_nodes(nodes: &HashMap<(u32, u32), Rc<RefCell<Node>>>, target: &(u32, 
         let mut mut_node = node.borrow_mut();
         mut_node.set_heuristic_distance_from(*target);
 
-        for neighbour_coords in mut_node.neighbouring_coords(){
+        for neighbour_coords in Node::neighbouring_coords(mut_node.coords){
             if let Some(neighbour) = nodes.get(&neighbour_coords){
                 mut_node.edges.push(neighbour.clone());
             }

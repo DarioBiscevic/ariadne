@@ -43,8 +43,8 @@ impl Node{
     }
 
     ///Returns the coordinates of the possible neighbours.
-    pub fn neighbouring_coords(&self) -> Vec<(u32, u32)>{
-        let (x, y) = self.coords;
+    pub fn neighbouring_coords(coords: (u32, u32)) -> Vec<(u32, u32)>{
+        let (x, y) = coords;
         let mut out = Vec::new();
 
         if x < u32::MAX - 1{
