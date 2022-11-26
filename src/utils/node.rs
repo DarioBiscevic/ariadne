@@ -37,20 +37,33 @@ impl Node{
         self.distance = Distance::Value(val);
     }
 
+    ///Sets the node's heuristic distance (manhattan geometry) from the specified `target`.
     pub fn set_heuristic_distance_from(&mut self, target: (u32, u32)){
         self.heuristic = (self.coords.0.abs_diff(target.0) + self.coords.1.abs_diff(target.1)) as u64;
     }
 
-    ///Checks if the `other` node is directly neighbouring with the current node.
-    pub fn is_neighbour_to(&self, other: &Rc<RefCell<Self>>) -> bool{
-        let borrowed = other.borrow();
-        let other_x = borrowed.coords.0;
-        let other_y = borrowed.coords.1;
+    ///Returns the coordinates of the possible neighbours.
+    pub fn neighbouring_coords(&self) -> Vec<(u32, u32)>{
+        let (x, y) = self.coords;
+        let mut out = Vec::new();
 
-        let diff_x = other_x as i64 - self.coords.0 as i64;
-        let diff_y = other_y as i64 - self.coords.1 as i64;
+        if x < u32::MAX - 1{
+            out.push((x + 1, y));
+        }
 
-        (diff_x == 0 && (diff_y == 1 || diff_y == -1)) || (diff_y == 0 && (diff_x == 1 || diff_x == -1))
+        if x > 0{
+            out.push((x - 1, y));
+        }
+
+        if y < u32::MAX - 1{
+            out.push((x, y + 1));
+        }
+
+        if y > 0{
+            out.push((x, y - 1));
+        }
+
+        out
     }
 
     ///Returns `true` if the node is a "road node".

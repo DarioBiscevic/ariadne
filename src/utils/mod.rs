@@ -2,6 +2,7 @@ use image::{RgbImage, Pixel, Rgb};
 
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 pub mod algorithm;
 pub mod args;
@@ -17,34 +18,28 @@ pub use args::Args;
 /// using the specified `algorithm`.
 pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
 
-    //Create the nodes that will be part of the graph/tree
-    let nodes: Vec<Rc<RefCell<Node>>> = image
-        .enumerate_pixels()
-        .filter(|(_, _, pixel)| pixel.channels() != DEFAULT_WALL_COLOR)
-        .map(|(x, y, pixel)| {
+    let mut nodes: HashMap<(u32, u32), Rc<RefCell<Node>>> = HashMap::new();
 
-            //Identify the node type
-            let node_type = match pixel.channels(){
-                DEFAULT_STARTING_COLOR => NodeType::Start,
-                DEFAULT_ENDING_COLOR => NodeType::End,
-                DEFAULT_ROAD_COLOR => NodeType::Road,
-                DEFAULT_WALL_COLOR => NodeType::Wall,
-                _ => NodeType::Road,
-            };
+    for (x, y, pixel) in image.enumerate_pixels().filter(|(_, _, pixel)| pixel.channels() != DEFAULT_WALL_COLOR){
+        let node_type = match pixel.channels(){
+            DEFAULT_STARTING_COLOR => NodeType::Start,
+            DEFAULT_ENDING_COLOR => NodeType::End,
+            DEFAULT_ROAD_COLOR => NodeType::Road,
+            DEFAULT_WALL_COLOR => NodeType::Wall,
+            _ => NodeType::Road,
+        };
 
-            //Return a newly created node
-            Node::new(*pixel, (x, y), node_type)
-        })
-        .collect();
+        nodes.insert((x, y), Node::new(*pixel, (x, y), node_type));
+    }
 
     //Try to find the end of the maze
     let maybe_end = nodes
         .iter()
-        .find(|node| node.borrow().is_end());
+        .find(|(_, node)| node.borrow().is_end());
 
     //Check if there is actually an ending node
-    let end = match maybe_end{
-        Some(end) => end,
+    let end_coords = match maybe_end{
+        Some((coords, _)) => coords,
         None => {
             return Err(
                 Error::Generic(format!("Couldn't find the ending point (the color should be {:?})", DEFAULT_ENDING_COLOR))
@@ -52,23 +47,17 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
         }
     };
 
-    let coords;
-
-    {
-        coords = end.borrow().clone().coords;
-    }
-
     //Connect the nodes
-    connect_nodes(&nodes, coords);
+    connect_nodes(&nodes, end_coords);
 
     //Try to find the start of the maze
     let maybe_root = nodes
         .iter()
-        .find(|node| node.as_ref().borrow().is_start());
+        .find(|(_, node)| node.as_ref().borrow().is_start());
 
     //Check if there is actually a starting node
     let root = match maybe_root{
-        Some(root) => root,
+        Some((_, root)) => root,
         None => {
             return Err(
                 Error::Generic(format!("Couldn't find the starting point (the color should be {:?})", DEFAULT_STARTING_COLOR))
@@ -105,12 +94,14 @@ pub fn run(image: RgbImage, arguments: Args) -> Result<()>{
 
 ///Function that fills the `edges` property of every node with the appropriate
 /// neighbouring nodes. Every node has 4 neighbours: up, down, left, right.
-fn connect_nodes(nodes: &[Rc<RefCell<Node>>], target: (u32, u32)){
-    for node in nodes.iter(){
-        node.borrow_mut().set_heuristic_distance_from(target);
-        
-        for neighbour in nodes.iter().filter(|n| node.clone().borrow().is_neighbour_to(n)){
-            node.borrow_mut().edges.push(neighbour.clone());
+fn connect_nodes(nodes: &HashMap<(u32, u32), Rc<RefCell<Node>>>, target: &(u32, u32)){for (_, node) in nodes.iter(){
+        let mut mut_node = node.borrow_mut();
+        mut_node.set_heuristic_distance_from(*target);
+
+        for neighbour_coords in mut_node.neighbouring_coords(){
+            if let Some(neighbour) = nodes.get(&neighbour_coords){
+                mut_node.edges.push(neighbour.clone());
+            }
         }
     }
 }

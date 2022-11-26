@@ -1,4 +1,4 @@
-use std::{rc::Rc};
+use std::rc::Rc;
 use std::cell::RefCell;
 
 use crate::prelude::*;
@@ -128,7 +128,6 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
     //Loop while there are nodes (and subsequent paths) to expand
     while !path_edges.is_empty(){
-
         //Remove all the nodes that were already checked - they won't be used again
         path_edges.retain(|n| !n.borrow().seen);
 
