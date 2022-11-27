@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="logo.svg" alt="ariadne" width="20%"/>
+	<img src="title-logo.svg" alt="ariadne" width="40%"/>
 </p>
 
 # Ariadne - A Maze Solver
