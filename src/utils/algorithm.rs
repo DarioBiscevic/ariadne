@@ -37,13 +37,9 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         //Remove all the nodes that were already checked - they won't be used again
         path_edges.retain(|n| !n.borrow().seen);
 
-        //Get the node with the smallest tentative distance
-        let current_ptr = path_edges.iter().filter(|n| !n.borrow().seen).cloned().min();
-        
-        let current: Rc<RefCell<Node>> = match current_ptr{
-            Some(node) => node,
-            None => return Err(Error::Generic("Didn't find a valid vertex".to_string()))
-        };
+        //Sort the vector and get the node with the smallest tentative distance
+        path_edges.sort();
+        let current = path_edges[0].clone();
 
         let mut current = current.borrow_mut();
 
@@ -131,13 +127,9 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         //Remove all the nodes that were already checked - they won't be used again
         path_edges.retain(|n| !n.borrow().seen);
 
-        //Get the node with the smallest tentative distance
-        let current_ptr = path_edges.iter().filter(|n| !n.borrow().seen).cloned().min();
-        
-        let current: Rc<RefCell<Node>> = match current_ptr{
-            Some(node) => node,
-            None => return Err(Error::Generic("Didn't find a valid vertex".to_string()))
-        };
+        //Sort the vector and get the node with the smallest tentative distance
+        path_edges.sort();
+        let current = path_edges[0].clone();
 
         let mut current = current.borrow_mut();
 
