@@ -85,7 +85,6 @@ pub fn run(mut image: RgbImage, arguments: Args) -> Result<()>{
     match result {
         Path::Found(path) => {
             let start = Instant::now();
-            //Prepare buffer for the output image
 
             //Convert the default path color from a slice to an array of values
             let path_color = Rgb::from([DEFAULT_PATH_COLOR[0], DEFAULT_PATH_COLOR[1], DEFAULT_PATH_COLOR[2]]);
