@@ -23,7 +23,7 @@ fn main() -> Result<()>{
                 Ok(image) => {
                     let result = run(image.into_rgb8(), args.clone());
                     if args.logging{
-                        println!("Total execution time: {:?}", start.elapsed());
+                        println!("Total execution time: \t\t{:?}", start.elapsed());
                     }
                     result
                 },

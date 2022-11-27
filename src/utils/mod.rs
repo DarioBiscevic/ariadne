@@ -79,7 +79,7 @@ pub fn run(mut image: RgbImage, arguments: Args) -> Result<()>{
     let start = Instant::now();
     let result = arguments.algorithm.execute(root, nodes.len())?;
     if arguments.logging{
-        println!("Algorithm execution time: {:?}", start.elapsed());
+        println!("Algorithm execution time: \t{:?}", start.elapsed());
     }
 
     match result {
@@ -106,7 +106,7 @@ pub fn run(mut image: RgbImage, arguments: Args) -> Result<()>{
             image.save(arguments.output_file)?;
 
             if arguments.logging{
-                println!("Output file creation time: {:?}", start.elapsed());
+                println!("Output file creation time: \t{:?}", start.elapsed());
             }
         },
         Path::NotFound => { eprintln!("Path not found!"); }
