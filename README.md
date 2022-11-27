@@ -2,7 +2,7 @@
 	<img src="logo.svg" alt="ariadne" width="20%"/>
 </p>
 
-# Ariadne - A maze solver
+# Ariadne - A Maze Solver
 A CLI utility for finding a path in an image of a maze.
 
 ## About
