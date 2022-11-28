@@ -17,6 +17,7 @@ The goal of the project is a complete, flexible utility that allows the analysis
 
 ### Other
 - DFS
+- BFS
 
 ## Usage
 ```

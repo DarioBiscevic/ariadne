@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::collections::VecDeque;
 
 use crate::prelude::*;
 use super::{Node, Distance};
@@ -11,6 +12,7 @@ pub enum Algorithm{
     Dijkstra,
     AStar,
     Dfs,
+    Bfs,
 }
 
 impl Algorithm{
@@ -20,6 +22,7 @@ impl Algorithm{
             Self::Dijkstra => dijkstra(root, n_nodes),
             Self::AStar    => a_star(root, n_nodes),
             Self::Dfs      => dfs(root, n_nodes),
+            Self::Bfs      => bfs(root, n_nodes),
         }
     }
 }
@@ -187,6 +190,39 @@ fn dfs(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         }
     }
 
+    prepare_path(ending)
+}
+
+fn bfs(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
+
+    //Queue with the "opened" vertices
+    let mut queue = VecDeque::with_capacity(n_nodes);
+
+    let mut ending = None;
+
+    root.borrow_mut().seen = true;
+    queue.push_back(root.clone());
+
+    while !queue.is_empty() && ending.is_none(){
+        let node_ref = queue.pop_front().unwrap();
+        let node = node_ref.borrow_mut();
+
+        if node.is_end(){
+            ending = Some(node.clone());
+        }
+
+        //Add the neighbouring vertices to the stack
+        for neighbour in node.edges.iter(){
+            let mut mut_n = neighbour.borrow_mut();
+
+            if !mut_n.seen{
+                mut_n.seen = true;
+                mut_n.previous = Some(node_ref.clone());
+                queue.push_back(neighbour.clone());
+            }
+        }
+    }
+    
     prepare_path(ending)
 }
 
