@@ -9,7 +9,8 @@ use super::{Node, Distance};
 #[derive(clap::ValueEnum, Debug, Clone)]
 pub enum Algorithm{
     Dijkstra,
-    AStar
+    AStar,
+    Dfs,
 }
 
 impl Algorithm{
@@ -18,6 +19,7 @@ impl Algorithm{
         match self{
             Self::Dijkstra => dijkstra(root, n_nodes),
             Self::AStar    => a_star(root, n_nodes),
+            Self::Dfs      => dfs(root, n_nodes),
         }
     }
 }
@@ -87,30 +89,7 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         }
     }
 
-    //Check if the ending node is actually the target
-    match ending{
-        Some(finish) => {
-            //If the ending node is the target, "compile" the path into a vector
-            if finish.is_end() && finish.previous.is_some(){
-                //Accumulator for each step of the path
-                let mut path = Vec::new();
-                let mut current = finish;
-
-                //Loop backwards until the starting node is reached
-                while let Some(previous) = current.previous {
-                    path.push(current.coords);
-                    current = previous.borrow().clone();
-                }
-                
-                path.reverse();
-
-                return Ok(Path::Found(path))
-            }
-
-            Ok(Path::NotFound)
-        },
-        None => Ok(Path::NotFound)
-    }
+    prepare_path(ending)
 }
 
 fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
@@ -177,6 +156,41 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         }
     }
 
+    prepare_path(ending)
+}
+
+fn dfs(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
+
+    //Stack with the "opened" vertices
+    let mut stack = Vec::with_capacity(n_nodes);
+
+    let mut ending = None;
+
+    stack.push(root.clone());
+
+    while !stack.is_empty() && ending.is_none(){
+        let node = stack.pop().unwrap();
+        let mut mut_node = node.borrow_mut();
+
+        if mut_node.is_end(){
+            ending = Some(mut_node.clone());
+        }
+        
+        mut_node.seen = true;
+
+        //Add the neighbouring vertices to the stack
+        for neighbour in mut_node.edges.iter().filter(|n| !n.borrow().seen){
+            let mut n = neighbour.borrow_mut();
+            n.previous = Some(node.clone());
+
+            stack.push(neighbour.clone());
+        }
+    }
+
+    prepare_path(ending)
+}
+
+fn prepare_path(ending: Option<Node>) -> Result<Path>{
     //Check if the ending node is actually the target
     match ending{
         Some(finish) => {
