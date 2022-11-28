@@ -24,7 +24,7 @@ Usage: ariadne [OPTIONS] --filename <FILENAME>
 
 Options:
   -f, --filename <FILENAME>        Input image filename
-  -a, --algorithm <ALGORITHM>      Pathfinding algorithm [default: dijkstra] [possible values: dijkstra, a-star]
+  -a, --algorithm <ALGORITHM>      Pathfinding algorithm [default: dijkstra] [possible values: dijkstra, a-star, dfs]
   -o, --output-file <OUTPUT_FILE>  Output file [default: output.png]
   -l, --logging                    Activate stdout logging
   -w, --wider                      Draw a wider path
