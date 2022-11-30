@@ -105,7 +105,7 @@ impl PartialOrd for Node{
 ///Implementation of the `Ord` trait.
 impl Ord for Node{
     fn cmp(&self, other: &Self) -> Ordering {
-        self.distance.cmp(&other.distance)
+        other.distance.cmp(&self.distance)
     }
 }
 ///Enum to make the identification of the node type easier.
