@@ -10,7 +10,7 @@ pub mod args;
 mod node;
 
 use crate::prelude::*;
-use node::{Node, NodeType, Distance};
+use node::{Node, NodeType};
 
 pub use crate::utils::algorithm::{Algorithm, Path};
 pub use args::Args;

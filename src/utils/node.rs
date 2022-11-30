@@ -11,7 +11,7 @@ pub struct Node{
     pub node_type: NodeType,
     pub coords: (u32, u32),
     pub seen: bool,
-    pub distance: Distance,
+    pub distance: u64,
     pub heuristic: u64,
     pub previous: Option<Rc<RefCell<Node>>>,
     pub edges: Vec<Rc<RefCell<Node>>>,
@@ -26,15 +26,15 @@ impl Node{
             coords,
             seen: false,
             previous: None,
-            distance: Distance::Infinity,
+            distance: u64::MAX,
             heuristic: 0,
-            edges: Vec::new()
+            edges: Vec::with_capacity(4)
         }))
     }
 
     ///Sets the node's distance to `val`.
     pub fn set_distance(&mut self, val: u64){
-        self.distance = Distance::Value(val);
+        self.distance = val;
     }
 
     ///Sets the node's heuristic distance (manhattan geometry) from the specified `target`.
@@ -89,17 +89,7 @@ impl Node{
 
 impl PartialEq for Node{
     fn eq(&self, other: &Self) -> bool {
-        if let Distance::Value(curr_dist) = self.distance{
-            match other.distance {
-                Distance::Value(other_dist) => curr_dist == other_dist,
-                Distance::Infinity => false
-            }
-        }else{
-            match other.distance{
-                Distance::Value(_) => false,
-                Distance::Infinity => true,
-            }
-        }
+        self.distance == other.distance
     }
 }
 
@@ -108,43 +98,16 @@ impl Eq for Node{}
 ///Implementation of the `PartialOrd` trait.
 impl PartialOrd for Node{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if let Distance::Value(curr_dist) = self.distance{
-            match other.distance {
-                Distance::Value(other_dist) => Some(curr_dist.cmp(&other_dist)),
-                Distance::Infinity => Some(Ordering::Less)
-            }
-        }else{
-            match other.distance {
-                Distance::Value(_) => Some(Ordering::Greater),
-                Distance::Infinity => Some(Ordering::Equal)
-            }
-        }
+        Some(self.cmp(other))
     }
 }
 
 ///Implementation of the `Ord` trait.
 impl Ord for Node{
     fn cmp(&self, other: &Self) -> Ordering {
-        if let Distance::Value(curr_dist) = self.distance{
-            match other.distance {
-                Distance::Value(other_dist) => curr_dist.cmp(&other_dist),
-                Distance::Infinity => Ordering::Less
-            }
-        }else{
-            match other.distance {
-                Distance::Value(_) => Ordering::Greater,
-                Distance::Infinity => Ordering::Equal
-            }
-        }
+        self.distance.cmp(&other.distance)
     }
 }
-
-#[derive(Debug, Clone)]
-pub enum Distance{
-    Value(u64),
-    Infinity
-}
-
 ///Enum to make the identification of the node type easier.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NodeType{

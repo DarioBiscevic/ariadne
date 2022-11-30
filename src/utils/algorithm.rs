@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 
 use crate::prelude::*;
-use super::{Node, Distance};
+use super::Node;
 
 ///Enums of possible algorithms to use.
 /// In the future, other pathfinding algorithms will be added.
@@ -58,14 +58,7 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         current.seen = true;
 
         //First check if the tentative distance of the current node is less than infinity
-        let curr_dist = match current.distance{
-            Distance::Value(dist) => dist,
-            Distance::Infinity => {
-                return Err(Error::Generic(
-                        format!("Current node has value set to infinity: (x,y) = {:?}, color: {:?}", current.coords, current.color)
-                    ))
-            }
-        };
+        let curr_dist = current.distance;
 
         //Iterate through the neighbours and calculate their tentative distance
         for neighbour in current.edges.iter().filter(|n| !n.borrow().seen){
@@ -74,14 +67,9 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
             //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
             let new_distance = curr_dist + 1;
             
-            if let Distance::Value(neighbour_dist) = neighbour_mut.distance{
-                //Update neighbour's tentative distance
-                if new_distance < neighbour_dist{
-                    neighbour_mut.distance = Distance::Value(new_distance);
-                }
-            }else{
-                //If the neighbours distance is infinity, setup the new finite value
-                neighbour_mut.distance = Distance::Value(new_distance);
+            //Update neighbour's tentative distance
+            if new_distance < neighbour_mut.distance{
+                neighbour_mut.distance = new_distance;
             }
 
             //Update the neighbour's parent node 
@@ -125,14 +113,7 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         current.seen = true;
 
         //First check if the tentative distance of the current node is less than infinity
-        let curr_dist = match current.distance{
-            Distance::Value(dist) => dist,
-            Distance::Infinity => {
-                return Err(Error::Generic(
-                        format!("Current node has value set to infinity: (x,y) = {:?}, color: {:?}", current.coords, current.color)
-                    ))
-            }
-        };
+        let curr_dist = current.distance;
 
         //Iterate through the neighbours and calculate their tentative distance
         for neighbour in current.edges.iter().filter(|n| !n.borrow().seen){
@@ -141,14 +122,9 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
             //Calculate the new tentative distance + the heuristic distance
             let new_distance = curr_dist + 1 + current.heuristic;
             
-            if let Distance::Value(neighbour_dist) = neighbour_mut.distance{
-                //Update neighbour's tentative distance
-                if new_distance < neighbour_dist{
-                    neighbour_mut.distance = Distance::Value(new_distance);
-                }
-            }else{
-                //If the neighbours distance is infinity, setup the new finite value
-                neighbour_mut.distance = Distance::Value(new_distance);
+            //Update neighbour's tentative distance
+            if new_distance < neighbour_mut.distance{
+                neighbour_mut.distance = new_distance;
             }
 
             //Update the neighbour's parent node 
