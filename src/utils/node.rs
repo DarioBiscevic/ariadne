@@ -27,7 +27,7 @@ impl Node{
             seen: false,
             previous: None,
             distance: u64::MAX,
-            heuristic: 0,
+            heuristic: u64::MAX,
             edges: Vec::with_capacity(4)
         }))
     }

@@ -89,6 +89,10 @@ pub fn run(mut image: RgbImage, arguments: Args) -> Result<()>{
             //Convert the default path color from a slice to an array of values
             let path_color = Rgb::from([DEFAULT_PATH_COLOR[0], DEFAULT_PATH_COLOR[1], DEFAULT_PATH_COLOR[2]]);
 
+            if arguments.logging{
+                println!("Path length: \t\t\t{}", path.len());
+            }
+
             //Substitute the pixels of the path with the path color
             for (x, y) in path{
                 image.put_pixel(x, y, path_color);
