@@ -87,8 +87,11 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
 fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     //Initialize the start of the tree
-    root.borrow_mut().f_score = 0;
-    root.borrow_mut().g_score = 0;
+    {
+        let mut root_mut = root.borrow_mut();
+        root_mut.f_score = 0;
+        root_mut.g_score = root_mut.heuristic;
+    }
 
     //Vector with the visitable edges
     let mut path_edges: Vec<Rc<RefCell<Node>>> = Vec::with_capacity(n_nodes);
@@ -118,7 +121,6 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         }    
 
         let current = current_rc.borrow();
-
 
         //Iterate through the neighbours
         for neighbour_rc in current.edges.iter().filter(|n| !n.borrow().seen){
