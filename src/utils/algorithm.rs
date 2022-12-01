@@ -89,8 +89,8 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     //Initialize the start of the tree
     {
         let mut root_mut = root.borrow_mut();
-        root_mut.f_score = 0;
-        root_mut.g_score = root_mut.heuristic;
+        root_mut.f_score = root_mut.heuristic;
+        root_mut.g_score = 0;
     }
 
     //Vector with the visitable edges
