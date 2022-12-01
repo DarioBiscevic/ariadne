@@ -20,7 +20,8 @@ pub use args::Args;
 pub fn run(mut image: RgbImage, arguments: Args) -> Result<()>{
 
     let start = Instant::now();
-    let mut nodes: HashMap<(u32, u32), Rc<RefCell<Node>>> = HashMap::new();
+    let max_possible_elements = (image.width() * image.height()) as usize;
+    let mut nodes: HashMap<(u32, u32), Rc<RefCell<Node>>> = HashMap::with_capacity(max_possible_elements);
 
     for (x, y, pixel) in image.enumerate_pixels().filter(|(_, _, pixel)| pixel.channels() != DEFAULT_WALL_COLOR){
         let node_type = match pixel.channels(){
