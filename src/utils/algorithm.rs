@@ -31,9 +31,8 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     //Initialize the start of the tree
     root.borrow_mut().f_score = 0;
 
-    //Vector with the visitable edges
+    //Array with the visitable edges
     let mut path_edges: VecDeque<Rc<RefCell<Node>>> = VecDeque::with_capacity(n_nodes);
-
     path_edges.push_front(root.clone());
 
     let mut ending = None;
@@ -47,6 +46,10 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
             if current.is_end(){
                 ending = Some(current.clone());
                 break;
+            }
+
+            if current.seen{
+                continue;
             }
 
             //Mark the current node as seen
@@ -70,12 +73,12 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
                     //Update the neighbour's parent node 
                     neighbour.previous = Some(current_rc.clone());
-                }                
-
-                //Add the neighbour to the set of visitable edges
-                let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
-                path_edges.insert(pos, neighbour_rc.clone());
+                }
+                            
             }
+            //Add the neighbour to the set of visitable edges
+            let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
+            path_edges.insert(pos, neighbour_rc.clone());    
         }
     }
 
@@ -90,9 +93,8 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         root_mut.g_score = 0;
     }
 
-    //Vector with the visitable edges
+    //Array with the visitable edges
     let mut path_edges: VecDeque<Rc<RefCell<Node>>> = VecDeque::with_capacity(n_nodes);
-
     path_edges.push_front(root.clone());
 
     let mut ending = None;
@@ -108,6 +110,10 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
                 break;
             }
 
+            if current.seen{
+                continue;
+            }
+
             //Mark the current node as seen
             current.seen = true;
         }    
@@ -121,21 +127,20 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
             
             //Update neighbour's tentative distance if the current path is better than the previous
             if new_distance < neighbour_rc.borrow().g_score{
-
                 {
                     let mut neighbour = neighbour_rc.borrow_mut();
 
+                    //Update the score taking into account the heuristic
                     neighbour.g_score = new_distance;
                     neighbour.f_score = new_distance + neighbour.heuristic; 
 
                     //Update the neighbour's parent node 
                     neighbour.previous = Some(current_rc.clone());
                 }                
-
-                //Add the neighbour to the set of visitable edges
-                let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
-                path_edges.insert(pos, neighbour_rc.clone());
             }
+            //Add the neighbour to the set of visitable edges
+            let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
+            path_edges.insert(pos, neighbour_rc.clone());
         }
     }
 
