@@ -29,9 +29,11 @@ impl Algorithm{
 
 fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     //Initialize the start of the tree
-    root.borrow_mut().set_distance(0);
+    root.borrow_mut().f_score = 0;
 
+    //Vector with the visitable edges
     let mut path_edges: Vec<Rc<RefCell<Node>>> = Vec::with_capacity(n_nodes);
+
     path_edges.push(root.clone());
 
     let mut ending = None;
@@ -57,23 +59,23 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
         let current = current_rc.borrow();
 
-        //Iterate through the neighbours and calculate their tentative distance
+        //Iterate through the neighbours
         for neighbour_rc in current.edges.iter().filter(|n| !n.borrow().seen){
             let mut neighbour = neighbour_rc.borrow_mut();
             
             //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
-            let new_distance = current.distance + 1;
+            let new_distance = current.f_score + 1;
             
-            //Update neighbour's tentative distance
-            if new_distance < neighbour.distance{
-                neighbour.distance = new_distance;
+            //Update neighbour's tentative distance if the current path is better than the previous
+            if new_distance < neighbour.f_score{
+                neighbour.f_score = new_distance;
+
+                //Update the neighbour's parent node 
+                neighbour.previous = Some(current_rc.clone());
+
+                //Add the neighbour to the set of visitable edges
+                path_edges.push(neighbour_rc.clone());
             }
-
-            //Update the neighbour's parent node 
-            neighbour.previous = Some(current_rc.clone());
-
-            //Add the neighbour to the set of edges to expand
-            path_edges.push(neighbour_rc.clone());
         }
 
         //Remove all the nodes that were already checked - they won't be used again
@@ -85,9 +87,12 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
 fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     //Initialize the start of the tree
-    root.borrow_mut().set_distance(0);
+    root.borrow_mut().f_score = 0;
+    root.borrow_mut().g_score = 0;
 
+    //Vector with the visitable edges
     let mut path_edges: Vec<Rc<RefCell<Node>>> = Vec::with_capacity(n_nodes);
+
     path_edges.push(root.clone());
 
     let mut ending = None;
@@ -114,23 +119,25 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
         let current = current_rc.borrow();
 
-        //Iterate through the neighbours and calculate their tentative distance
+
+        //Iterate through the neighbours
         for neighbour_rc in current.edges.iter().filter(|n| !n.borrow().seen){
             let mut neighbour = neighbour_rc.borrow_mut();
             
-            //Calculate the new tentative distance + the heuristic distance
-            let new_distance = current.distance + 1 + neighbour.heuristic;
+            //Calculate the new tentative distance
+            let new_distance = current.g_score + 1;
             
-            //Update neighbour's tentative distance
-            if new_distance < neighbour.distance{
-                neighbour.distance = new_distance;
+            //Update neighbour's tentative distance 
+            if new_distance < neighbour.g_score{
+                neighbour.g_score = new_distance;
+                neighbour.f_score = new_distance + neighbour.heuristic; //Add the heuristic distance
+
+                //Update the neighbour's parent node 
+                neighbour.previous = Some(current_rc.clone());
+
+                //Add the neighbour to the set of visitable edges
+                path_edges.push(neighbour_rc.clone());
             }
-
-            //Update the neighbour's parent node 
-            neighbour.previous = Some(current_rc.clone());
-
-            //Add the neighbour to the set of edges to expand
-            path_edges.push(neighbour_rc.clone());
         }
 
         //Remove all the nodes that were already checked - they won't be used again

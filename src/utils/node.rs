@@ -11,8 +11,9 @@ pub struct Node{
     pub node_type: NodeType,
     pub coords: (u32, u32),
     pub seen: bool,
-    pub distance: u64,
+    pub g_score: u64,
     pub heuristic: u64,
+    pub f_score: u64,
     pub previous: Option<Rc<RefCell<Node>>>,
     pub edges: Vec<Rc<RefCell<Node>>>,
 }
@@ -26,15 +27,11 @@ impl Node{
             coords,
             seen: false,
             previous: None,
-            distance: u64::MAX,
+            g_score: u64::MAX,
             heuristic: u64::MAX,
+            f_score: u64::MAX,
             edges: Vec::with_capacity(4)
         }))
-    }
-
-    ///Sets the node's distance to `val`.
-    pub fn set_distance(&mut self, val: u64){
-        self.distance = val;
     }
 
     ///Sets the node's heuristic distance (manhattan geometry) from the specified `target`.
@@ -89,7 +86,7 @@ impl Node{
 
 impl PartialEq for Node{
     fn eq(&self, other: &Self) -> bool {
-        self.distance == other.distance
+        self.f_score == other.f_score
     }
 }
 
@@ -105,7 +102,7 @@ impl PartialOrd for Node{
 ///Implementation of the `Ord` trait.
 impl Ord for Node{
     fn cmp(&self, other: &Self) -> Ordering {
-        self.distance.cmp(&other.distance)
+        self.f_score.cmp(&other.f_score)
     }
 }
 ///Enum to make the identification of the node type easier.
