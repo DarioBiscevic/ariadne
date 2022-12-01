@@ -32,18 +32,14 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     root.borrow_mut().f_score = 0;
 
     //Vector with the visitable edges
-    let mut path_edges: Vec<Rc<RefCell<Node>>> = Vec::with_capacity(n_nodes);
+    let mut path_edges: VecDeque<Rc<RefCell<Node>>> = VecDeque::with_capacity(n_nodes);
 
-    path_edges.push(root.clone());
+    path_edges.push_front(root.clone());
 
     let mut ending = None;
 
     //Loop while there are nodes (and subsequent paths) to expand
-    while !path_edges.is_empty(){
-        //Sort the vector and get the node with the smallest tentative distance
-        path_edges.sort();
-        let current_rc = path_edges[0].clone();
-
+    while let Some(current_rc) = path_edges.pop_front(){
         {
             let mut current = current_rc.borrow_mut();
 
@@ -61,25 +57,26 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
         //Iterate through the neighbours
         for neighbour_rc in current.edges.iter().filter(|n| !n.borrow().seen){
-            let mut neighbour = neighbour_rc.borrow_mut();
-            
             //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
             let new_distance = current.f_score + 1;
             
             //Update neighbour's tentative distance if the current path is better than the previous
-            if new_distance < neighbour.f_score{
-                neighbour.f_score = new_distance;
+            if new_distance < neighbour_rc.borrow().f_score{
 
-                //Update the neighbour's parent node 
-                neighbour.previous = Some(current_rc.clone());
+                {
+                    let mut neighbour = neighbour_rc.borrow_mut();
+
+                    neighbour.f_score = new_distance;
+
+                    //Update the neighbour's parent node 
+                    neighbour.previous = Some(current_rc.clone());
+                }                
 
                 //Add the neighbour to the set of visitable edges
-                path_edges.push(neighbour_rc.clone());
+                let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
+                path_edges.insert(pos, neighbour_rc.clone());
             }
         }
-
-        //Remove all the nodes that were already checked - they won't be used again
-        path_edges.retain(|n| !n.borrow().seen);
     }
 
     prepare_path(ending)
@@ -87,23 +84,21 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
 fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     //Initialize the start of the tree
-    root.borrow_mut().f_score = 0;
-    root.borrow_mut().g_score = 0;
+    {
+        let mut root_mut = root.borrow_mut();
+        root_mut.f_score = root_mut.heuristic;
+        root_mut.g_score = 0;
+    }
 
     //Vector with the visitable edges
-    let mut path_edges: Vec<Rc<RefCell<Node>>> = Vec::with_capacity(n_nodes);
+    let mut path_edges: VecDeque<Rc<RefCell<Node>>> = VecDeque::with_capacity(n_nodes);
 
-    path_edges.push(root.clone());
+    path_edges.push_front(root.clone());
 
     let mut ending = None;
 
     //Loop while there are nodes (and subsequent paths) to expand
-    while !path_edges.is_empty(){
-
-        //Sort the vector and get the node with the smallest tentative distance
-        path_edges.sort();
-        let current_rc = path_edges[0].clone();
-
+    while let Some(current_rc) = path_edges.pop_front(){
         {
             let mut current = current_rc.borrow_mut();
 
@@ -119,29 +114,29 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
         let current = current_rc.borrow();
 
-
         //Iterate through the neighbours
         for neighbour_rc in current.edges.iter().filter(|n| !n.borrow().seen){
-            let mut neighbour = neighbour_rc.borrow_mut();
-            
-            //Calculate the new tentative distance
+            //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
             let new_distance = current.g_score + 1;
             
-            //Update neighbour's tentative distance 
-            if new_distance < neighbour.g_score{
-                neighbour.g_score = new_distance;
-                neighbour.f_score = new_distance + neighbour.heuristic; //Add the heuristic distance
+            //Update neighbour's tentative distance if the current path is better than the previous
+            if new_distance < neighbour_rc.borrow().g_score{
 
-                //Update the neighbour's parent node 
-                neighbour.previous = Some(current_rc.clone());
+                {
+                    let mut neighbour = neighbour_rc.borrow_mut();
+
+                    neighbour.g_score = new_distance;
+                    neighbour.f_score = new_distance + neighbour.heuristic; 
+
+                    //Update the neighbour's parent node 
+                    neighbour.previous = Some(current_rc.clone());
+                }                
 
                 //Add the neighbour to the set of visitable edges
-                path_edges.push(neighbour_rc.clone());
+                let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
+                path_edges.insert(pos, neighbour_rc.clone());
             }
         }
-
-        //Remove all the nodes that were already checked - they won't be used again
-        path_edges.retain(|n| !n.borrow().seen);
     }
 
     prepare_path(ending)
@@ -156,12 +151,12 @@ fn dfs(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
 
     stack.push(root.clone());
 
-    while !stack.is_empty() && ending.is_none(){
-        let node = stack.pop().unwrap();
+    while let Some(node) = stack.pop(){
         let mut mut_node = node.borrow_mut();
 
         if mut_node.is_end(){
             ending = Some(mut_node.clone());
+            break;
         }
         
         mut_node.seen = true;
