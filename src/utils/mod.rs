@@ -94,6 +94,16 @@ pub fn run(mut image: RgbImage, arguments: Args) -> Result<()>{
                 println!("Path length: \t\t\t{}", path.len());
             }
 
+            //Color the nodes that have been seen
+            if arguments.seen{
+                let seen_color = Rgb::from([DEFAULT_SEEN_COLOR[0], DEFAULT_SEEN_COLOR[1], DEFAULT_SEEN_COLOR[2]]);
+                for (coords, node) in nodes.iter(){
+                    if node.borrow().seen{
+                        image.put_pixel(coords.0, coords.1, seen_color);
+                    }
+                }
+            }
+
             //Substitute the pixels of the path with the path color
             for (x, y) in path{
                 image.put_pixel(x, y, path_color);

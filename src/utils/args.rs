@@ -26,4 +26,8 @@ pub struct Args{
     ///Draw a wider path
     #[arg(short, long, default_value_t = false)]
     pub wider: bool,
+
+    ///Show the nodes that have been seen
+    #[arg(short, long, default_value_t = false)]
+    pub seen: bool,
 }
