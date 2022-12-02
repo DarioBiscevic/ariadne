@@ -48,10 +48,6 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
                 break;
             }
 
-            if current.seen{
-                continue;
-            }
-
             //Mark the current node as seen
             current.seen = true;
         }
@@ -59,26 +55,26 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         let current = current_rc.borrow();
 
         //Iterate through the neighbours
-        for neighbour_rc in current.edges.iter().filter(|n| !n.borrow().seen){
+        for neighbour_rc in current.edges.iter(){
             //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
             let new_distance = current.f_score + 1;
             
             //Update neighbour's tentative distance if the current path is better than the previous
             if new_distance < neighbour_rc.borrow().f_score{
+                let mut neighbour = neighbour_rc.borrow_mut();
 
-                {
-                    let mut neighbour = neighbour_rc.borrow_mut();
+                neighbour.f_score = new_distance;
 
-                    neighbour.f_score = new_distance;
-
-                    //Update the neighbour's parent node 
-                    neighbour.previous = Some(current_rc.clone());
-                }
-                            
+                //Update the neighbour's parent node 
+                neighbour.previous = Some(current_rc.clone()); 
             }
-            //Add the neighbour to the set of visitable edges
-            let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
-            path_edges.insert(pos, neighbour_rc.clone());    
+
+            if !neighbour_rc.borrow().seen{
+                path_edges.retain(|v| v.borrow().coords != neighbour_rc.borrow().coords);
+    
+                let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
+                path_edges.insert(pos, neighbour_rc.clone()); 
+            } 
         }
     }
 
@@ -110,10 +106,6 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
                 break;
             }
 
-            if current.seen{
-                continue;
-            }
-
             //Mark the current node as seen
             current.seen = true;
         }    
@@ -121,26 +113,28 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         let current = current_rc.borrow();
 
         //Iterate through the neighbours
-        for neighbour_rc in current.edges.iter().filter(|n| !n.borrow().seen){
+        for neighbour_rc in current.edges.iter(){
             //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
             let new_distance = current.g_score + 1;
             
             //Update neighbour's tentative distance if the current path is better than the previous
             if new_distance < neighbour_rc.borrow().g_score{
-                {
-                    let mut neighbour = neighbour_rc.borrow_mut();
+                let mut neighbour = neighbour_rc.borrow_mut();
 
-                    //Update the score taking into account the heuristic
-                    neighbour.g_score = new_distance;
-                    neighbour.f_score = new_distance + neighbour.heuristic; 
+                //Update the score taking into account the heuristic
+                neighbour.g_score = new_distance;
+                neighbour.f_score = new_distance + neighbour.heuristic; 
 
-                    //Update the neighbour's parent node 
-                    neighbour.previous = Some(current_rc.clone());
-                }                
+                //Update the neighbour's parent node 
+                neighbour.previous = Some(current_rc.clone());
             }
-            //Add the neighbour to the set of visitable edges
-            let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
-            path_edges.insert(pos, neighbour_rc.clone());
+            
+            if !neighbour_rc.borrow().seen{
+                path_edges.retain(|v| v.borrow().coords != neighbour_rc.borrow().coords);
+    
+                let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
+                path_edges.insert(pos, neighbour_rc.clone()); 
+            }  
         }
     }
 
