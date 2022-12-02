@@ -11,11 +11,8 @@ _Ariadne_ is a simple command-line tool that, given as input an image of a maze,
 The goal of the project is a complete, flexible utility that allows the analysis of different pathfinding algorithms, as well as simply solving mazes and presenting the solution in an appealing way.
 
 ## Implemented Algorithms
-### Shortest path
 - Dijkstra
 - A*
-
-### Other
 - DFS
 - BFS
 
