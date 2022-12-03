@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::collections::VecDeque;
+use std::collections::{VecDeque, BinaryHeap};
 
 use crate::prelude::*;
 use super::Node;
@@ -31,16 +31,16 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     //Initialize the start of the tree
     root.borrow_mut().f_score = 0;
 
-    //Array with the visitable edges
-    let mut path_edges: VecDeque<Rc<RefCell<Node>>> = VecDeque::with_capacity(n_nodes);
-    path_edges.push_front(root.clone());
+    //BinaryHeap with the visitable edges
+    let mut path_edges: BinaryHeap<Tag> = BinaryHeap::with_capacity(n_nodes);
+    path_edges.push(Tag::new(root.clone(), 0));
 
     let mut ending = None;
 
     //Loop while there are nodes (and subsequent paths) to expand
-    while let Some(current_rc) = path_edges.pop_front(){
+    while let Some(current_tag) = path_edges.pop(){
         {
-            let mut current = current_rc.borrow_mut();
+            let mut current = current_tag.node.borrow_mut();
 
             //Exit the loop if the target is found
             if current.is_end(){
@@ -48,16 +48,23 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
                 break;
             }
 
+            //Pop another element if the current one was already seen
+            if current.seen{
+                continue;
+            }
+
             //Mark the current node as seen
             current.seen = true;
         }
 
-        let current = current_rc.borrow();
+        let current = current_tag.node.borrow();
 
         //Iterate through the neighbours
         for neighbour_rc in current.edges.iter(){
             //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
             let new_distance = current.f_score + 1;
+
+            
             
             //Update neighbour's tentative distance if the current path is better than the previous
             if new_distance < neighbour_rc.borrow().f_score{
@@ -66,14 +73,14 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
                 neighbour.f_score = new_distance;
 
                 //Update the neighbour's parent node 
-                neighbour.previous = Some(current_rc.clone()); 
+                neighbour.previous = Some(current_tag.node.clone()); 
             }
 
-            if !neighbour_rc.borrow().seen{
-                path_edges.retain(|v| v.borrow().coords != neighbour_rc.borrow().coords);
-    
-                let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
-                path_edges.insert(pos, neighbour_rc.clone()); 
+            let neighbour_read = neighbour_rc.borrow();
+
+            if !neighbour_read.seen{
+                //Push the element in the priority queue
+                path_edges.push(Tag::new(neighbour_rc.clone(), neighbour_read.f_score)); 
             } 
         }
     }
@@ -89,16 +96,16 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         root_mut.g_score = 0;
     }
 
-    //Array with the visitable edges
-    let mut path_edges: VecDeque<Rc<RefCell<Node>>> = VecDeque::with_capacity(n_nodes);
-    path_edges.push_front(root.clone());
+    //BinaryHeap with the visitable edges
+    let mut path_edges: BinaryHeap<Tag> = BinaryHeap::with_capacity(n_nodes);
+    path_edges.push(Tag::new(root.clone(), 0));
 
     let mut ending = None;
 
     //Loop while there are nodes (and subsequent paths) to expand
-    while let Some(current_rc) = path_edges.pop_front(){
+    while let Some(current_tag) = path_edges.pop(){
         {
-            let mut current = current_rc.borrow_mut();
+            let mut current = current_tag.node.borrow_mut();
 
             //Exit the loop if the target is found
             if current.is_end(){
@@ -106,16 +113,21 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
                 break;
             }
 
+            //Pop another element if the current one was already seen
+            if current.seen{
+                continue;
+            }
+
             //Mark the current node as seen
             current.seen = true;
-        }    
+        }
 
-        let current = current_rc.borrow();
+        let current = current_tag.node.borrow();
 
         //Iterate through the neighbours
         for neighbour_rc in current.edges.iter(){
             //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
-            let new_distance = current.g_score + 1;
+            let new_distance = current.g_score + 1;            
             
             //Update neighbour's tentative distance if the current path is better than the previous
             if new_distance < neighbour_rc.borrow().g_score{
@@ -126,14 +138,13 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
                 neighbour.f_score = new_distance + neighbour.heuristic; 
 
                 //Update the neighbour's parent node 
-                neighbour.previous = Some(current_rc.clone());
+                neighbour.previous = Some(current_tag.node.clone());
             }
+
+            let neighbour_read = neighbour_rc.borrow();
             
-            if !neighbour_rc.borrow().seen{
-                path_edges.retain(|v| v.borrow().coords != neighbour_rc.borrow().coords);
-    
-                let pos = path_edges.binary_search(neighbour_rc).unwrap_or_else(|e| e);
-                path_edges.insert(pos, neighbour_rc.clone()); 
+            if !neighbour_read.seen{
+                path_edges.push(Tag::new(neighbour_rc.clone(), neighbour_read.f_score)); 
             }  
         }
     }
@@ -236,4 +247,17 @@ fn prepare_path(ending: Option<Node>) -> Result<Path>{
 pub enum Path{
     NotFound,
     Found(Vec<(u32, u32)>)
+}
+
+///Struct used to maintain the order of the priority queue in Dijkstra's and A* algorithms
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
+struct Tag{
+    node: Rc<RefCell<Node>>,
+    distance: u64,
+}
+
+impl Tag {
+    fn new(node: Rc<RefCell<Node>>, distance: u64) -> Self{
+        Tag { node, distance }
+    }
 }

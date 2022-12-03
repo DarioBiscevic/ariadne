@@ -99,10 +99,11 @@ impl PartialOrd for Node{
     }
 }
 
-///Implementation of the `Ord` trait.
+///Implementation of the `Ord` trait "in reverse", to ease the implementation
+/// of the Dijkstra's and A* algorithms
 impl Ord for Node{
     fn cmp(&self, other: &Self) -> Ordering {
-        self.f_score.cmp(&other.f_score)
+        other.f_score.cmp(&self.f_score)
     }
 }
 ///Enum to make the identification of the node type easier.
