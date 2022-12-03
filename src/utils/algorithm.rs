@@ -63,8 +63,6 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
         for neighbour_rc in current.edges.iter(){
             //Calculate the new tentative distance (1 "unit" is the distance between 2 pixels)
             let new_distance = current.f_score + 1;
-
-            
             
             //Update neighbour's tentative distance if the current path is better than the previous
             if new_distance < neighbour_rc.borrow().f_score{
