@@ -30,7 +30,7 @@ impl Node{
             g_score: u64::MAX,
             heuristic: u64::MAX,
             f_score: u64::MAX,
-            edges: Vec::with_capacity(4)
+            edges: Vec::new()
         }))
     }
 

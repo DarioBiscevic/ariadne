@@ -17,22 +17,22 @@ pub enum Algorithm{
 
 impl Algorithm{
     ///Execute the pathfinding algorithm
-    pub fn execute(&self, root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
+    pub fn execute(&self, root: &Rc<RefCell<Node>>) -> Result<Path>{
         match self{
-            Self::Dijkstra => dijkstra(root, n_nodes),
-            Self::AStar    => a_star(root, n_nodes),
-            Self::Dfs      => dfs(root, n_nodes),
-            Self::Bfs      => bfs(root, n_nodes),
+            Self::Dijkstra => dijkstra(root),
+            Self::AStar    => a_star(root),
+            Self::Dfs      => dfs(root),
+            Self::Bfs      => bfs(root),
         }
     }
 }
 
-fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
+fn dijkstra(root: &Rc<RefCell<Node>>) -> Result<Path>{
     //Initialize the start of the tree
     root.borrow_mut().f_score = 0;
 
     //BinaryHeap with the visitable edges
-    let mut path_edges: BinaryHeap<Tag> = BinaryHeap::with_capacity(n_nodes);
+    let mut path_edges: BinaryHeap<Tag> = BinaryHeap::new();
     path_edges.push(Tag::new(root.clone(), 0));
 
     let mut ending = None;
@@ -86,7 +86,7 @@ fn dijkstra(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     prepare_path(ending)
 }
 
-fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
+fn a_star(root: &Rc<RefCell<Node>>) -> Result<Path>{
     //Initialize the start of the tree
     {
         let mut root_mut = root.borrow_mut();
@@ -95,7 +95,7 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     }
 
     //BinaryHeap with the visitable edges
-    let mut path_edges: BinaryHeap<Tag> = BinaryHeap::with_capacity(n_nodes);
+    let mut path_edges: BinaryHeap<Tag> = BinaryHeap::new();
     path_edges.push(Tag::new(root.clone(), 0));
 
     let mut ending = None;
@@ -150,10 +150,10 @@ fn a_star(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     prepare_path(ending)
 }
 
-fn dfs(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
+fn dfs(root: &Rc<RefCell<Node>>) -> Result<Path>{
 
     //Stack with the "opened" vertices
-    let mut stack = Vec::with_capacity(n_nodes);
+    let mut stack = Vec::new();
 
     let mut ending = None;
 
@@ -181,10 +181,10 @@ fn dfs(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
     prepare_path(ending)
 }
 
-fn bfs(root: &Rc<RefCell<Node>>, n_nodes: usize) -> Result<Path>{
+fn bfs(root: &Rc<RefCell<Node>>) -> Result<Path>{
 
     //Queue with the "opened" vertices
-    let mut queue = VecDeque::with_capacity(n_nodes);
+    let mut queue = VecDeque::new();
 
     let mut ending = None;
 
